@@ -2,40 +2,28 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import fetch from "node-fetch";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
- // ==== CORS FIX ====
-res.setHeader("Access-Control-Allow-Origin", "*");
-res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-res.setHeader(
-  "Access-Control-Allow-Headers",
-  "Content-Type, Accept, Authorization, X-Requested-With"
-);
+  // ====== CORS ======
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-if (req.method === "OPTIONS") {
-  return res.status(200).end();
-}
-// ==================
-
-  // Preflight request (OPTIONS)
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
-  // ==================
+  // ===================
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
-  const { prompt, temperature } = req.body as {
-    prompt?: string;
-    temperature?: number;
-  };
+  // 🟢 FE gửi contents → backend nhận contents
+  const { contents } = req.body;
 
-  if (!prompt) {
-    return res.status(400).json({ error: "Missing prompt" });
+  if (!contents) {
+    return res.status(400).json({ error: "Missing contents" });
   }
 
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
   if (!GEMINI_API_KEY) {
     return res.status(500).json({ error: "Missing GEMINI_API_KEY" });
   }
@@ -47,13 +35,12 @@ if (req.method === "OPTIONS") {
     const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-      }),
+      body: JSON.stringify({ contents }),
     });
 
     const data = await response.json();
-    return res.status(200).json(data);
+    return res.status(response.status).json(data);
+
   } catch (err) {
     console.error("❌ Gemini API Error:", err);
     return res.status(500).json({ error: "Server error calling Gemini" });
