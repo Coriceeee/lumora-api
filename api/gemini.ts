@@ -2,10 +2,18 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import fetch from "node-fetch";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // ==== CORS FIX ====
-  res.setHeader("Access-Control-Allow-Origin", "*"); // hoặc thay * bằng "https://lumora.ai.vn"
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+ // ==== CORS FIX ====
+res.setHeader("Access-Control-Allow-Origin", "*");
+res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+res.setHeader(
+  "Access-Control-Allow-Headers",
+  "Content-Type, Accept, Authorization, X-Requested-With"
+);
+
+if (req.method === "OPTIONS") {
+  return res.status(200).end();
+}
+// ==================
 
   // Preflight request (OPTIONS)
   if (req.method === "OPTIONS") {
